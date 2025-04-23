@@ -8,31 +8,34 @@ import (
 	"strings"
 )
 
-func Getval_five(key string) string {
-	final := fmt.Sprintf("%s=", key)
-
-	return map_four()[final]
+// returns env pair value, when key is called without hardcoding secrets
+func Getval_five(requested_key string) string {
+	file_value := fmt.Sprintf("%s=", requested_key)
+	return map_four()[file_value]
 }
 
+// combines prefix(key):suffix(pair) as map element
 func map_four() map[string]string {
 	element := make(map[string]string)
-	a := prefix_env_two()
-	b := suffix_env_three()
+	key := prefix_env_two()
+	pair := suffix_env_three()
 
-	for i, v := range a {
-		element[v] = b[i]
+	for i, value_key := range key {
+		element[value_key] = pair[i]
 	}
 
 	return element
 }
 
+// creates suffix (pair) string slice, proportionally matched to prefix indexing
 func suffix_env_three() []string {
-	og := listenv_one()
+	original_data := envdata_one()
 	prefixes := prefix_env_two()
 
 	var suf []string
 
-	for i, v := range og {
+	for i, v := range original_data {
+		//removes suffix
 		value := strings.ReplaceAll(v, prefixes[i], "")
 		suf = append(suf, value)
 	}
@@ -40,30 +43,34 @@ func suffix_env_three() []string {
 	return suf
 }
 
+// creates prefix (key) string slice, for matching
 func prefix_env_two() []string {
-	var pref []string
+	var prefixes []string
 
-	for _, v := range listenv_one() {
-		new := strings.SplitAfter(v, "=")
-		if new[0] == "" {
+	for _, line_value := range envdata_one() {
+		// seperator "=" included in prefix, to be removed later
+		// note: can be repurposed as ":" for ie - user:pass, proxy:pass, etc.
+		new_line_value := strings.SplitAfter(line_value, "=")
+		if new_line_value[0] == "" {
 			continue
 		} else {
-			pref = append(pref, new[0])
+			prefixes = append(prefixes, new_line_value[0])
 		}
 	}
 
-	return pref
+	return prefixes
 }
 
-func listenv_one() []string {
-	env_data, err := os.ReadFile(".env")
+// pulls data directly from file
+func envdata_one() []string {
+	env_rawdata, err := os.ReadFile(".env")
 
 	if err != nil {
-		fmt.Println("issue with .env file")
+		fmt.Println("Issue loading .env file")
 		log.Fatal(err)
 	}
 
-	list := strings.Split(string(env_data), "\n")
-	final_list := slices.Delete(list, (len(list) - 1), len(list))
-	return final_list
+	list_keys := strings.Split(string(env_rawdata), "\n")
+	final_list_keys := slices.Delete(list_keys, (len(list_keys) - 1), len(list_keys))
+	return final_list_keys
 }
